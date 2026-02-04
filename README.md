@@ -66,7 +66,7 @@ sudo apt install gir1.2-appindicator3-0.1
 ### Install SpineGuard
 
 ```bash
-git clone https://github.com/yourusername/spineguard.git
+git clone https://github.com/judeam/spineguard.git
 cd spineguard
 ./install.sh
 ```
