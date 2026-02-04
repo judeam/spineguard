@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=SpineGuard
+Comment=L5-S1 Recovery Pomodoro Timer
+Exec=spineguard
+Icon=spineguard
+Categories=Utility;Health;
+Keywords=pomodoro;timer;health;spine;recovery;break;
+StartupNotify=false
+Terminal=false
