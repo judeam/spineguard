@@ -32,6 +32,7 @@ class SettingsDialog(Gtk.Window):
         stack.add_titled(self._build_timers_page(), "timers", "Timers")
         stack.add_titled(self._build_notifications_page(), "notifications", "Alerts")
         stack.add_titled(self._build_sounds_page(), "sounds", "Sounds")
+        stack.add_titled(self._build_routines_page(), "routines", "Routines")
 
         sidebar = Gtk.StackSidebar()
         sidebar.set_stack(stack)
@@ -128,6 +129,46 @@ class SettingsDialog(Gtk.Window):
         ))
 
         page.append(card3)
+
+        # Extra breaks section
+        page.append(self._section_header("EXTRA BREAKS"))
+
+        card4 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        card4.add_css_class("panel-card")
+        card4.set_margin_bottom(20)
+
+        breathing_switch = Gtk.Switch()
+        breathing_switch.set_active(self._config.get("breathing_enabled"))
+        breathing_switch.connect("notify::active", lambda s, _: self._config.set("breathing_enabled", s.get_active()))
+        breathing_switch.set_valign(Gtk.Align.CENTER)
+
+        card4.append(self._setting_row(
+            "Breathing exercises", "Short breathing breaks between pomodoro cycles",
+            breathing_switch,
+        ))
+        card4.append(self._thin_divider())
+        card4.append(self._setting_row(
+            "Breathing frequency", "Trigger every N pomodoro cycles",
+            self._make_spin(self._config.get("breathing_frequency"), 1, 10, "breathing_frequency"),
+        ))
+        card4.append(self._thin_divider())
+
+        eye_rest_switch = Gtk.Switch()
+        eye_rest_switch.set_active(self._config.get("eye_rest_enabled"))
+        eye_rest_switch.connect("notify::active", lambda s, _: self._config.set("eye_rest_enabled", s.get_active()))
+        eye_rest_switch.set_valign(Gtk.Align.CENTER)
+
+        card4.append(self._setting_row(
+            "Eye rest micro-breaks", "20-20-20 rule: brief popup every N minutes",
+            eye_rest_switch,
+        ))
+        card4.append(self._thin_divider())
+        card4.append(self._setting_row(
+            "Eye rest interval", "Minutes between eye rest reminders",
+            self._make_spin(self._config.get("eye_rest_interval_minutes"), 5, 60, "eye_rest_interval_minutes"),
+        ))
+
+        page.append(card4)
 
         scrolled.set_child(page)
         return scrolled
@@ -400,6 +441,110 @@ class SettingsDialog(Gtk.Window):
                 pass
 
         dialog.open(self, None, on_response)
+
+    # ── Routines Page ────────────────────────────────────────
+
+    def _build_routines_page(self) -> Gtk.Widget:
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+        page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        page.set_margin_top(28)
+        page.set_margin_bottom(28)
+        page.set_margin_start(28)
+        page.set_margin_end(28)
+
+        page.append(self._page_header("Routines", "Manage exercise track rotation and progression"))
+
+        # Rotation mode
+        page.append(self._section_header("TRACK ROTATION"))
+
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        card.add_css_class("panel-card")
+        card.set_margin_bottom(20)
+
+        mode_dropdown = Gtk.DropDown.new_from_strings(["Auto-rotate daily", "Manual selection"])
+        current_mode = 1 if self._config.get("routine_mode") == "manual" else 0
+        mode_dropdown.set_selected(current_mode)
+        mode_dropdown.connect("notify::selected", lambda d, _: self._config.set(
+            "routine_mode", "manual" if d.get_selected() == 1 else "auto"
+        ))
+
+        card.append(self._setting_row(
+            "Rotation mode", "How tracks are selected each day",
+            mode_dropdown,
+        ))
+
+        page.append(card)
+
+        # Pinned tracks
+        page.append(self._section_header("PINNED TRACKS"))
+
+        from . import tips
+
+        pin_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        pin_card.add_css_class("panel-card")
+        pin_card.set_margin_bottom(20)
+
+        walk_names = ["Auto"] + [t["name"] for t in tips.WALK_TRACKS.values()]
+        walk_ids = [None] + list(tips.WALK_TRACKS.keys())
+        walk_dropdown = Gtk.DropDown.new_from_strings(walk_names)
+        current_pin = self._config.get("pinned_walk_track")
+        if current_pin in walk_ids:
+            walk_dropdown.set_selected(walk_ids.index(current_pin))
+        walk_dropdown.connect("notify::selected", lambda d, _: self._config.set(
+            "pinned_walk_track", walk_ids[d.get_selected()] if d.get_selected() > 0 else None
+        ))
+
+        pin_card.append(self._setting_row(
+            "Walk track", "Pin a specific walk track",
+            walk_dropdown,
+        ))
+        pin_card.append(self._thin_divider())
+
+        ld_names = ["Auto"] + [t["name"] for t in tips.LIE_DOWN_TRACKS.values()]
+        ld_ids = [None] + list(tips.LIE_DOWN_TRACKS.keys())
+        ld_dropdown = Gtk.DropDown.new_from_strings(ld_names)
+        current_ld_pin = self._config.get("pinned_lie_down_track")
+        if current_ld_pin in ld_ids:
+            ld_dropdown.set_selected(ld_ids.index(current_ld_pin))
+        ld_dropdown.connect("notify::selected", lambda d, _: self._config.set(
+            "pinned_lie_down_track", ld_ids[d.get_selected()] if d.get_selected() > 0 else None
+        ))
+
+        pin_card.append(self._setting_row(
+            "Lie-down track", "Pin a specific lie-down track",
+            ld_dropdown,
+        ))
+
+        page.append(pin_card)
+
+        # Reset progress
+        page.append(self._section_header("PROGRESS"))
+
+        reset_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        reset_card.add_css_class("panel-card")
+        reset_card.set_margin_bottom(20)
+
+        reset_btn = Gtk.Button(label="Reset All Progress")
+        reset_btn.add_css_class("skip-button")
+        reset_btn.connect("clicked", self._on_reset_progress)
+
+        reset_card.append(self._setting_row(
+            "Reset progress", "Clear all track levels and completions",
+            reset_btn,
+        ))
+
+        page.append(reset_card)
+
+        scrolled.set_child(page)
+        return scrolled
+
+    def _on_reset_progress(self, button):
+        """Reset all routine progress after confirmation."""
+        from .routines import RoutineProgress
+        rp = RoutineProgress()
+        rp.reset_progress()
 
     # ── Handlers ─────────────────────────────────────────────
 
