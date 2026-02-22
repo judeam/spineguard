@@ -62,6 +62,9 @@ class BreakOverlay(Gtk.Window):
         context: Optional[dict] = None,
         on_done_early: Optional[Callable[[], None]] = None,
         monitor: Optional[Gdk.Monitor] = None,
+        track_info: Optional[dict] = None,
+        streak: int = 0,
+        breathing_exercise: Optional[dict] = None,
     ):
         super().__init__()
 
@@ -77,6 +80,12 @@ class BreakOverlay(Gtk.Window):
         self._context = context or {}
         self._timer_id: Optional[int] = None
         self._monitor = monitor
+        self._track_info = track_info
+        self._streak = streak
+        self._breathing_exercise = breathing_exercise
+        self._breath_phase_index = 0
+        self._breath_phase_elapsed = 0
+        self._breath_circle_scale = 0.3
 
         # Routine tracking (set by _build_ui if a routine is selected)
         self._routine = None
@@ -131,7 +140,11 @@ class BreakOverlay(Gtk.Window):
         main_box.add_css_class("overlay-content")
 
         # Break type header
-        if self._break_type == BreakType.PHYSIO:
+        if self._break_type == BreakType.BREATHING:
+            header_text = "Breathing Exercise"
+            header_icon = "\U0001f32c\ufe0f"  # 🌬️
+            instruction = self._breathing_exercise["name"] if self._breathing_exercise else "Breathe deeply"
+        elif self._break_type == BreakType.PHYSIO:
             header_text = "Time for Physio"
             header_icon = "\U0001f3cb\ufe0f"
             instruction = "Do your physio workout"
@@ -170,12 +183,32 @@ class BreakOverlay(Gtk.Window):
         instruction_label.add_css_class("break-instruction")
         main_box.append(instruction_label)
 
-        # Countdown timer display
-        self._countdown_drawing = Gtk.DrawingArea()
-        self._countdown_drawing.set_size_request(250, 250)
-        self._countdown_drawing.set_draw_func(self._draw_countdown)
-        self._countdown_drawing.add_css_class("countdown-area")
-        main_box.append(self._countdown_drawing)
+        # Track info bar
+        if self._track_info:
+            ti = self._track_info
+            track_text = f"{ti['track_name']} \u2014 Level {ti['level'] + 1}/{ti['max_level'] + 1} ({ti['completions']}/5)"
+            track_label = Gtk.Label(label=track_text)
+            track_label.add_css_class("track-info-label")
+            main_box.append(track_label)
+
+        # Timer display
+        if self._break_type == BreakType.BREATHING and self._breathing_exercise:
+            self._breath_drawing = Gtk.DrawingArea()
+            self._breath_drawing.set_size_request(250, 250)
+            self._breath_drawing.set_draw_func(self._draw_breathing_circle)
+            self._breath_drawing.add_css_class("countdown-area")
+            main_box.append(self._breath_drawing)
+
+            first_phase = self._breathing_exercise["phases"][0]
+            self._phase_label = Gtk.Label(label=f"{first_phase['label']}... {first_phase['seconds']}s")
+            self._phase_label.add_css_class("breathing-phase-label")
+            main_box.append(self._phase_label)
+        else:
+            self._countdown_drawing = Gtk.DrawingArea()
+            self._countdown_drawing.set_size_request(250, 250)
+            self._countdown_drawing.set_draw_func(self._draw_countdown)
+            self._countdown_drawing.add_css_class("countdown-area")
+            main_box.append(self._countdown_drawing)
 
         # Health tip or routine
         if self._break_type == BreakType.PHYSIO:
@@ -193,7 +226,9 @@ class BreakOverlay(Gtk.Window):
             )
 
             if use_routine:
-                if self._break_type == BreakType.WALK:
+                if "routine" in self._context:
+                    self._routine = self._context["routine"]
+                elif self._break_type == BreakType.WALK:
                     self._routine = tips.get_walk_routine()
                 else:
                     self._routine = tips.get_lie_down_routine()
@@ -250,6 +285,14 @@ class BreakOverlay(Gtk.Window):
 
         main_box.append(button_box)
 
+        # Streak counter
+        if self._streak > 0:
+            streak_label = Gtk.Label(label=f"\U0001f525 {self._streak}-day streak")
+            streak_label.add_css_class("streak-label")
+            streak_label.set_halign(Gtk.Align.CENTER)
+            streak_label.set_margin_top(20)
+            main_box.append(streak_label)
+
         self.set_child(main_box)
 
     def _draw_countdown(self, area, cr, width, height):
@@ -295,6 +338,39 @@ class BreakOverlay(Gtk.Window):
         cr.move_to(cx - extents.width / 2, cy + extents.height / 3)
         cr.show_text(time_text)
 
+    def _draw_breathing_circle(self, area, cr, width, height):
+        """Draw the animated breathing circle."""
+        cx = width / 2
+        cy = height / 2
+        max_radius = min(width, height) / 2 - 20
+        radius = max_radius * self._breath_circle_scale
+
+        # Outer guide ring
+        cr.set_source_rgba(0.2, 0.3, 0.35, 0.3)
+        cr.set_line_width(2)
+        cr.arc(cx, cy, max_radius, 0, 2 * math.pi)
+        cr.stroke()
+
+        # Breathing circle - color by phase
+        phase = self._get_current_breath_phase()
+        if phase and "inhale" in phase["label"].lower():
+            cr.set_source_rgba(0.3, 0.6, 0.9, 0.6)
+        elif phase and "exhale" in phase["label"].lower():
+            cr.set_source_rgba(0.9, 0.5, 0.3, 0.6)
+        else:
+            cr.set_source_rgba(0.4, 0.7, 0.7, 0.6)
+        cr.arc(cx, cy, radius, 0, 2 * math.pi)
+        cr.fill()
+
+    def _get_current_breath_phase(self):
+        """Get the current breathing phase dict."""
+        if not self._breathing_exercise:
+            return None
+        phases = self._breathing_exercise["phases"]
+        if self._breath_phase_index < len(phases):
+            return phases[self._breath_phase_index]
+        return None
+
     def _start_countdown(self):
         """Start the countdown timer."""
         self._timer_id = GLib.timeout_add_seconds(1, self._tick)
@@ -312,11 +388,36 @@ class BreakOverlay(Gtk.Window):
                         self._done_button.set_sensitive(True)
                 elif self._done_button:
                     self._done_button.set_label(f"Done ({self._done_delay_remaining}s)")
-            self._countdown_drawing.queue_draw()
+            if hasattr(self, "_countdown_drawing"):
+                self._countdown_drawing.queue_draw()
             return True
 
         self._seconds_remaining -= 1
-        self._countdown_drawing.queue_draw()
+        if hasattr(self, "_countdown_drawing"):
+            self._countdown_drawing.queue_draw()
+
+        # Advance breathing phases
+        if self._break_type == BreakType.BREATHING and self._breathing_exercise:
+            self._breath_phase_elapsed += 1
+            phases = self._breathing_exercise["phases"]
+            if self._breath_phase_index < len(phases):
+                current_phase = phases[self._breath_phase_index]
+                phase_progress = self._breath_phase_elapsed / current_phase["seconds"]
+                label = current_phase["label"].lower()
+                if "inhale" in label:
+                    self._breath_circle_scale = 0.3 + 0.7 * min(phase_progress, 1.0)
+                elif "exhale" in label:
+                    self._breath_circle_scale = 1.0 - 0.7 * min(phase_progress, 1.0)
+
+                if self._breath_phase_elapsed >= current_phase["seconds"]:
+                    self._breath_phase_index = (self._breath_phase_index + 1) % len(phases)
+                    self._breath_phase_elapsed = 0
+                    next_phase = phases[self._breath_phase_index]
+                    if hasattr(self, "_phase_label"):
+                        self._phase_label.set_text(f"{next_phase['label']}... {next_phase['seconds']}s")
+
+            if hasattr(self, "_breath_drawing"):
+                self._breath_drawing.queue_draw()
 
         # Advance routine step if active
         if self._routine and self._tip_label:
