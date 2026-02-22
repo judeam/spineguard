@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spineguard"
+version = "1.0.0"
+description = "Back health Pomodoro timer for Linux"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{name = "Jude A M"}]
+keywords = ["pomodoro", "health", "posture", "break", "timer", "gtk"]
+classifiers = [
+    "Environment :: X11 Applications :: GTK",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/judeam/spineguard"
+Repository = "https://github.com/judeam/spineguard"
+Issues = "https://github.com/judeam/spineguard/issues"
+
+[project.scripts]
+spineguard = "spineguard.app:main"
+
+[tool.setuptools.packages.find]
+include = ["spineguard"]
+
+[tool.setuptools.package-data]
+spineguard = ["style.css"]

@@ -32,3 +32,20 @@ create_mockups.py
 # OS
 .DS_Store
 Thumbs.db
+
+# Debian packaging
+*.deb
+*.dsc
+*.changes
+*.buildinfo
+debian/.debhelper/
+debian/spineguard/
+debian/files
+
+# Arch packaging
+pkg/
+src/
+*.pkg.tar.zst
+
+# Python packaging
+*.whl

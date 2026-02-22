@@ -123,6 +123,39 @@ WALK_ROUTINES = [
             {"instruction": "Resume walking with good posture for the remaining time", "duration_seconds": 0},
         ],
     },
+    {
+        "name": "Single-Leg Balance & Glute Activation",
+        "benefit": "Strengthens hip stabilizers and improves pelvic control",
+        "steps": [
+            {"instruction": "Stand tall, feet hip-width apart. Shift weight to your left foot", "duration_seconds": 10},
+            {"instruction": "Lift your right foot off the floor. Balance for 20 seconds — squeeze your standing glute", "duration_seconds": 25},
+            {"instruction": "Switch sides. Balance on your right foot for 20 seconds", "duration_seconds": 25},
+            {"instruction": "Standing on one leg, slowly hinge forward at the hips (warrior 3). Hold 10 seconds each side", "duration_seconds": 30},
+            {"instruction": "Walk with engaged glutes and core for the remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Wall Sit & Isometric Hold",
+        "benefit": "Builds quad and core endurance to support the lower back",
+        "steps": [
+            {"instruction": "Find a wall. Lean your back flat against it and slide down until knees are at 90 degrees", "duration_seconds": 10},
+            {"instruction": "Hold the wall sit — keep your lower back pressed into the wall. Breathe steadily", "duration_seconds": 30},
+            {"instruction": "Stand up and shake out your legs for 10 seconds", "duration_seconds": 15},
+            {"instruction": "Wall sit again — this time squeeze a fist between your knees to activate inner thighs", "duration_seconds": 30},
+            {"instruction": "Stand and walk slowly, focusing on tall posture for the remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Standing Pallof Press (Imaginary)",
+        "benefit": "Anti-rotation core training to protect the spine under load",
+        "steps": [
+            {"instruction": "Stand with feet shoulder-width apart, arms extended in front of your chest, hands clasped", "duration_seconds": 10},
+            {"instruction": "Brace your core. Slowly rotate your clasped hands to the left — resist with your trunk. Hold 5 seconds", "duration_seconds": 15},
+            {"instruction": "Return to centre. Rotate to the right — resist with your trunk. Hold 5 seconds", "duration_seconds": 15},
+            {"instruction": "Repeat: left hold 5s, centre, right hold 5s. Focus on keeping hips square", "duration_seconds": 20},
+            {"instruction": "Walk with engaged core, feeling your obliques activated, for the remaining time", "duration_seconds": 0},
+        ],
+    },
 ]
 
 # Structured exercise routines for lie-down breaks
@@ -169,6 +202,72 @@ LIE_DOWN_ROUTINES = [
             {"instruction": "Switch legs. Bring the other knee to chest — hold 15 seconds", "duration_seconds": 20},
             {"instruction": "Gently bring both knees to chest together — hold 15 seconds", "duration_seconds": 20},
             {"instruction": "Return to starting position. Rest with deep breathing for remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Side Plank Progression",
+        "benefit": "Strengthens obliques and quadratus lumborum — key spinal stabilizers",
+        "steps": [
+            {"instruction": "Lie on your right side, knees bent. Prop up on your right elbow under your shoulder", "duration_seconds": 10},
+            {"instruction": "Lift your hips off the floor into a modified side plank (knees down). Hold 20 seconds", "duration_seconds": 25},
+            {"instruction": "Lower and rest 10 seconds. If able, try a full side plank with legs straight", "duration_seconds": 15},
+            {"instruction": "Switch to your left side. Modified or full side plank — hold 20 seconds", "duration_seconds": 25},
+            {"instruction": "Lower and rest. Repeat each side once more if time allows", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Clamshells & Hip Strengthening",
+        "benefit": "Activates gluteus medius to stabilize the pelvis and reduce lower back strain",
+        "steps": [
+            {"instruction": "Lie on your right side, knees bent at 45 degrees, feet together. Head resting on your arm", "duration_seconds": 10},
+            {"instruction": "Keeping feet together, open your top knee like a clamshell. Squeeze at the top. 10 reps slowly", "duration_seconds": 30},
+            {"instruction": "Hold the last rep open for 10 seconds — feel the burn in your outer hip", "duration_seconds": 15},
+            {"instruction": "Switch to your left side. 10 slow clamshells, then hold the last rep open 10 seconds", "duration_seconds": 45},
+            {"instruction": "Lie on your back and rest. Breathe deeply for the remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Glute Bridge Progression",
+        "benefit": "Activates glutes and hamstrings to offload the lower back",
+        "steps": [
+            {"instruction": "Lie on your back, knees bent, feet flat and hip-width apart. Arms at sides", "duration_seconds": 10},
+            {"instruction": "Squeeze your glutes and lift your hips to form a straight line from shoulders to knees. Hold 10 seconds", "duration_seconds": 15},
+            {"instruction": "Lower slowly. Repeat 5 times — squeeze hard at the top each time", "duration_seconds": 30},
+            {"instruction": "Single-leg bridge: extend one leg straight. Lift hips with the other. 5 reps each side", "duration_seconds": 40},
+            {"instruction": "Rest on your back with knees bent. Breathe deeply for the remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Bird-Dog Core Stability",
+        "benefit": "Trains anti-rotation and spinal stabilization through contralateral movement",
+        "steps": [
+            {"instruction": "Get on all fours — hands under shoulders, knees under hips. Neutral spine", "duration_seconds": 10},
+            {"instruction": "Extend your right arm forward and left leg back simultaneously. Hold 5 seconds", "duration_seconds": 10},
+            {"instruction": "Return to start. Extend left arm and right leg. Hold 5 seconds. Alternate 5 each side", "duration_seconds": 40},
+            {"instruction": "Slow it down: extend and hold each rep for 10 seconds. 3 each side", "duration_seconds": 30},
+            {"instruction": "Return to all fours, then sit back into child's pose. Rest for the remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Dead Bug Anti-Extension",
+        "benefit": "Builds deep core strength while keeping the lower back safe and supported",
+        "steps": [
+            {"instruction": "Lie on your back. Raise arms straight to ceiling, knees bent at 90 degrees (tabletop position)", "duration_seconds": 10},
+            {"instruction": "Press your lower back into the floor — this is your brace. Don't let it arch", "duration_seconds": 10},
+            {"instruction": "Slowly extend your right arm overhead and left leg straight out. Return. Alternate sides — 5 each", "duration_seconds": 40},
+            {"instruction": "If that's easy: extend both opposite limbs and hold 5 seconds at full extension. 3 each side", "duration_seconds": 30},
+            {"instruction": "Return to starting position and rest. Breathe deeply for the remaining time", "duration_seconds": 0},
+        ],
+    },
+    {
+        "name": "Side-Lying Hip Abduction Series",
+        "benefit": "Strengthens lateral hip muscles to improve pelvic stability during walking and standing",
+        "steps": [
+            {"instruction": "Lie on your right side, body in a straight line, head on your arm", "duration_seconds": 10},
+            {"instruction": "Keeping your top leg straight, lift it 30-45 degrees. Slowly lower. 10 reps", "duration_seconds": 30},
+            {"instruction": "Small circles with the top leg — 10 forward, 10 backward", "duration_seconds": 20},
+            {"instruction": "Switch to your left side. 10 leg lifts, then 10 circles each direction", "duration_seconds": 50},
+            {"instruction": "Lie on your back and rest. Breathe deeply for the remaining time", "duration_seconds": 0},
         ],
     },
 ]

@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+export PYBUILD_NAME=spineguard
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_install:
+	dh_install
+	install -Dm644 data/spineguard.desktop debian/spineguard/usr/share/applications/spineguard.desktop
+	install -Dm644 data/com.spineguard.app.metainfo.xml debian/spineguard/usr/share/metainfo/com.spineguard.app.metainfo.xml
+	install -Dm644 assets/icon-48.png debian/spineguard/usr/share/icons/hicolor/48x48/apps/spineguard.png
+	install -Dm644 assets/icon-64.png debian/spineguard/usr/share/icons/hicolor/64x64/apps/spineguard.png
+	install -Dm644 assets/icon-128.png debian/spineguard/usr/share/icons/hicolor/128x128/apps/spineguard.png
+	install -Dm644 assets/icon-256.png debian/spineguard/usr/share/icons/hicolor/256x256/apps/spineguard.png
+	install -Dm644 assets/tray-48.png debian/spineguard/usr/share/spineguard/tray-icon.png

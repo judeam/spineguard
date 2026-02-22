@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.spineguard.app</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>SpineGuard</name>
+  <summary>Back health Pomodoro timer with enforced full-screen breaks</summary>
+
+  <description>
+    <p>
+      SpineGuard uses a modified Pomodoro technique designed around back health.
+      Every 25 minutes, a full-screen overlay appears prompting you to take a break.
+      Breaks alternate between walking and lying down to encourage movement, relieve
+      pressure, and counteract prolonged sitting.
+    </p>
+    <p>Features include:</p>
+    <ul>
+      <li>Full-screen break overlays that cannot be dismissed early</li>
+      <li>Guided exercise routines (McKenzie extensions, posture resets, spinal decompression)</li>
+      <li>Sit-stand desk mode with position switch reminders</li>
+      <li>Water and supplement reminders</li>
+      <li>Daily scheduled physio workout break</li>
+      <li>Idle and screen lock detection with auto-pause</li>
+      <li>Multi-monitor support</li>
+      <li>System tray icon with live countdown</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">spineguard.desktop</launchable>
+
+  <url type="homepage">https://github.com/judeam/spineguard</url>
+  <url type="bugtracker">https://github.com/judeam/spineguard/issues</url>
+  <url type="vcs-browser">https://github.com/judeam/spineguard</url>
+
+  <provides>
+    <binary>spineguard</binary>
+  </provides>
+
+  <categories>
+    <category>Utility</category>
+    <category>GTK</category>
+  </categories>
+
+  <keywords>
+    <keyword>pomodoro</keyword>
+    <keyword>timer</keyword>
+    <keyword>health</keyword>
+    <keyword>posture</keyword>
+    <keyword>break</keyword>
+    <keyword>spine</keyword>
+    <keyword>back</keyword>
+  </keywords>
+
+  <releases>
+    <release version="1.0.0" date="2025-06-15">
+      <description>
+        <p>Initial release with Pomodoro breaks, guided exercise routines,
+        sit-stand desk mode, water/supplement reminders, idle detection,
+        multi-monitor support, and system tray integration.</p>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1" />
+</component>

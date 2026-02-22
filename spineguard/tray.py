@@ -17,7 +17,8 @@ from gi.repository import GLib
 from .config import Config
 from .timers import BreakType
 
-SOCKET_DIR = Path.home() / ".local" / "share" / "spineguard"
+_runtime_dir = os.environ.get("XDG_RUNTIME_DIR", str(Path.home() / ".local" / "share"))
+SOCKET_DIR = Path(_runtime_dir) / "spineguard"
 TRAY_SOCKET = SOCKET_DIR / "tray.sock"
 MAIN_SOCKET = SOCKET_DIR / "main.sock"
 

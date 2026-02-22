@@ -1,0 +1,29 @@
+Source: spineguard
+Section: utils
+Priority: optional
+Maintainer: Jude A M <jude@spineguard.dev>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-setuptools,
+               pybuild-plugin-pyproject
+Standards-Version: 4.6.2
+Homepage: https://github.com/judeam/spineguard
+Rules-Requires-Root: no
+
+Package: spineguard
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         python3-gi,
+         gir1.2-gtk-4.0
+Recommends: gir1.2-gsound-1.0,
+            gir1.2-appindicator3-0.1
+Description: Back health Pomodoro timer with enforced full-screen breaks
+ SpineGuard uses a modified Pomodoro technique designed around back health.
+ Every 25 minutes, a full-screen overlay appears prompting you to take a
+ break. Breaks alternate between walking and lying down to encourage
+ movement, relieve pressure, and counteract prolonged sitting.
+ .
+ Features include guided exercise routines, sit-stand desk mode, water and
+ supplement reminders, idle detection, and multi-monitor support.

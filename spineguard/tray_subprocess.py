@@ -40,10 +40,26 @@ try:
 except (ValueError, ImportError):
     HAS_KEYBINDER = False
 
-SOCKET_PATH = Path.home() / ".local" / "share" / "spineguard" / "tray.sock"
+_runtime_dir = os.environ.get("XDG_RUNTIME_DIR", str(Path.home() / ".local" / "share"))
+SOCKET_DIR = Path(_runtime_dir) / "spineguard"
+SOCKET_PATH = SOCKET_DIR / "tray.sock"
 CONFIG_FILE = Path.home() / ".config" / "spineguard" / "config.json"
-INSTALL_DIR = Path.home() / ".local" / "share" / "spineguard"
-TRAY_ICON = INSTALL_DIR / "tray-icon.png"
+
+
+def _find_tray_icon() -> Path:
+    """Locate the tray icon across install methods."""
+    candidates = [
+        Path.home() / ".local" / "share" / "spineguard" / "tray-icon.png",  # install.sh
+        Path("/usr/share/spineguard/tray-icon.png"),  # system package
+        Path(__file__).parent.parent / "assets" / "tray-48.png",  # development
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return candidates[0]
+
+
+TRAY_ICON = _find_tray_icon()
 
 
 class TrayProcess:
@@ -75,7 +91,7 @@ class TrayProcess:
                 str(TRAY_ICON),
                 AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
             )
-            self._indicator.set_icon_theme_path(str(INSTALL_DIR))
+            self._indicator.set_icon_theme_path(str(TRAY_ICON.parent))
         else:
             self._indicator = AppIndicator3.Indicator.new(
                 "spineguard",
@@ -135,6 +151,7 @@ class TrayProcess:
 
     def _setup_socket(self):
         """Set up socket to receive updates from main process."""
+        SOCKET_DIR.mkdir(parents=True, exist_ok=True)
         if SOCKET_PATH.exists():
             SOCKET_PATH.unlink()
 
@@ -207,7 +224,7 @@ class TrayProcess:
 
     def _send_command(self, cmd):
         """Send command to main process."""
-        main_socket = Path.home() / ".local" / "share" / "spineguard" / "main.sock"
+        main_socket = SOCKET_DIR / "main.sock"
         if main_socket.exists():
             try:
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)

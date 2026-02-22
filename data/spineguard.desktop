@@ -2,7 +2,7 @@
 Type=Application
 Name=SpineGuard
 Comment=Back Health Pomodoro Timer
-Exec=/home/ohm/.local/bin/spineguard
+Exec=spineguard
 Icon=spineguard
 Categories=Utility;
 Keywords=pomodoro;timer;health;spine;back;posture;break;
