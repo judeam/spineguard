@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=SpineGuard
-Comment=L5-S1 Recovery Pomodoro Timer
-Exec=spineguard
+Comment=Back Health Pomodoro Timer
+Exec=/home/ohm/.local/bin/spineguard
 Icon=spineguard
-Categories=Utility;Health;
-Keywords=pomodoro;timer;health;spine;recovery;break;
+Categories=Utility;
+Keywords=pomodoro;timer;health;spine;back;posture;break;
 StartupNotify=false
 Terminal=false

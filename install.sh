@@ -5,7 +5,7 @@ set -e
 
 echo "=========================================="
 echo "  SpineGuard Installer"
-echo "  L5-S1 Recovery Pomodoro Timer"
+echo "  Back Health Pomodoro Timer"
 echo "=========================================="
 echo
 
@@ -21,6 +21,10 @@ BIN_DIR="$HOME/.local/bin"
 AUTOSTART_DIR="$HOME/.config/autostart"
 APPS_DIR="$HOME/.local/share/applications"
 ICONS_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
+ICONS_256="$HOME/.local/share/icons/hicolor/256x256/apps"
+ICONS_128="$HOME/.local/share/icons/hicolor/128x128/apps"
+ICONS_64="$HOME/.local/share/icons/hicolor/64x64/apps"
+ICONS_48="$HOME/.local/share/icons/hicolor/48x48/apps"
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -71,6 +75,10 @@ mkdir -p "$BIN_DIR"
 mkdir -p "$AUTOSTART_DIR"
 mkdir -p "$APPS_DIR"
 mkdir -p "$ICONS_DIR"
+mkdir -p "$ICONS_256"
+mkdir -p "$ICONS_128"
+mkdir -p "$ICONS_64"
+mkdir -p "$ICONS_48"
 
 # Copy application files
 echo "  Copying application files..."
@@ -98,7 +106,7 @@ cat > "$AUTOSTART_DIR/spineguard.desktop" << EOF
 [Desktop Entry]
 Type=Application
 Name=SpineGuard
-Comment=L5-S1 Recovery Pomodoro Timer
+Comment=Back Health Pomodoro Timer
 Exec=$BIN_DIR/spineguard
 Icon=spineguard
 Categories=Utility;Health;
@@ -107,23 +115,23 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
-# Create simple SVG icon
-echo "  Installing icon..."
-cat > "$ICONS_DIR/spineguard.svg" << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3a7ca5"/>
-      <stop offset="100%" style="stop-color:#1a4a6a"/>
-    </linearGradient>
-  </defs>
-  <circle cx="32" cy="32" r="30" fill="url(#bg)"/>
-  <path d="M32 8 L32 32 L48 32" stroke="#7ec8a3" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <circle cx="32" cy="32" r="4" fill="#7ec8a3"/>
-  <text x="32" y="54" text-anchor="middle" fill="#e8f4f8" font-size="8" font-family="sans-serif">SPINE</text>
-</svg>
-EOF
+# Install app icons (PNG at multiple sizes)
+echo "  Installing icons..."
+if [ -d "$SCRIPT_DIR/assets" ]; then
+    cp "$SCRIPT_DIR/assets/icon-256.png" "$ICONS_256/spineguard.png"
+    cp "$SCRIPT_DIR/assets/icon-128.png" "$ICONS_128/spineguard.png"
+    cp "$SCRIPT_DIR/assets/icon-64.png"  "$ICONS_64/spineguard.png"
+    cp "$SCRIPT_DIR/assets/icon-48.png"  "$ICONS_48/spineguard.png"
+    cp "$SCRIPT_DIR/assets/logo.png"     "$ICONS_DIR/spineguard.png"
+fi
+
+# Install tray icon (spine + clock badge)
+echo "  Installing tray icon..."
+if [ -d "$SCRIPT_DIR/assets" ]; then
+    cp "$SCRIPT_DIR/assets/tray-48.png" "$INSTALL_DIR/tray-icon.png"
+    cp "$SCRIPT_DIR/assets/tray-24.png" "$INSTALL_DIR/tray-icon-24.png"
+    cp "$SCRIPT_DIR/assets/tray-22.png" "$INSTALL_DIR/tray-icon-22.png"
+fi
 
 # Update icon cache (if available)
 if command -v gtk-update-icon-cache &> /dev/null; then

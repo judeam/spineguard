@@ -17,14 +17,15 @@ except (ValueError, ImportError):
 class SoundPlayer:
     """Plays notification sounds."""
 
-    # System sound IDs (freedesktop sound theme)
-    SOUND_BREAK_START = "complete"  # A gentle completion/bell sound
-    SOUND_WATER = "message"  # Message notification sound
-    SOUND_SUPPLEMENT = "alarm-clock-elapsed"  # Alarm sound for supplements
-    SOUND_BREAK_END = "bell"  # Bell when break ends
+    # Default sound IDs (freedesktop sound theme)
+    SOUND_BREAK_START = "complete"
+    SOUND_WATER = "message"
+    SOUND_SUPPLEMENT = "message"
+    SOUND_BREAK_END = "bell"
 
-    def __init__(self):
-        self._context: Optional[GSound.Context] = None
+    def __init__(self, config=None):
+        self._config = config
+        self._context = None
         self._available = False
 
         if HAS_GSOUND:
@@ -47,9 +48,20 @@ class SoundPlayer:
             except (subprocess.CalledProcessError, FileNotFoundError):
                 print("No sound backend available (install libgsound or libcanberra-gtk3)")
 
+    def _get_sound(self, config_key: str, default: str) -> str:
+        """Get sound ID from config, falling back to default."""
+        if self._config:
+            return self._config.get(config_key, default)
+        return default
+
     def _play_sound_id(self, sound_id: str):
         """Play a sound by its freedesktop sound ID."""
         if not self._available:
+            return
+
+        # If sound_id starts with /, treat as file path
+        if sound_id.startswith("/"):
+            self._play_file(sound_id)
             return
 
         if self._context:
@@ -71,18 +83,42 @@ class SoundPlayer:
             except Exception:
                 pass
 
+    def _play_file(self, path: str):
+        """Play a sound file by path."""
+        if self._context:
+            try:
+                self._context.play_simple({
+                    GSound.ATTR_MEDIA_FILENAME: path,
+                    GSound.ATTR_EVENT_DESCRIPTION: "SpineGuard notification",
+                })
+            except Exception:
+                pass
+        else:
+            try:
+                subprocess.Popen(
+                    ["canberra-gtk-play", "-f", path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception:
+                pass
+
     def play_break_start(self):
         """Play sound when a break starts."""
-        self._play_sound_id(self.SOUND_BREAK_START)
+        sound = self._get_sound("sound_break_start", self.SOUND_BREAK_START)
+        self._play_sound_id(sound)
 
     def play_break_end(self):
         """Play sound when a break ends."""
-        self._play_sound_id(self.SOUND_BREAK_END)
+        sound = self._get_sound("sound_break_end", self.SOUND_BREAK_END)
+        self._play_sound_id(sound)
 
     def play_water_reminder(self):
         """Play sound for water reminder."""
-        self._play_sound_id(self.SOUND_WATER)
+        sound = self._get_sound("sound_water", self.SOUND_WATER)
+        self._play_sound_id(sound)
 
     def play_supplement_reminder(self):
         """Play sound for supplement reminder."""
-        self._play_sound_id(self.SOUND_SUPPLEMENT)
+        sound = self._get_sound("sound_supplement", self.SOUND_SUPPLEMENT)
+        self._play_sound_id(sound)

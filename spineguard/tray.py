@@ -14,6 +14,7 @@ from typing import Callable, Optional
 
 from gi.repository import GLib
 
+from .config import Config
 from .timers import BreakType
 
 SOCKET_DIR = Path.home() / ".local" / "share" / "spineguard"
@@ -33,6 +34,12 @@ class TrayIcon:
         get_seconds_remaining: Callable[[], int],
         get_next_break_type: Callable[[], str],
         is_paused: Callable[[], bool],
+        config: Optional[Config] = None,
+        get_position_seconds: Optional[Callable[[], int]] = None,
+        get_current_position: Optional[Callable[[], str]] = None,
+        *,
+        on_show_settings: Optional[Callable[[], None]] = None,
+        on_show_stats: Optional[Callable[[], None]] = None,
     ):
         self._on_pause_toggle = on_pause_toggle
         self._on_skip = on_skip
@@ -41,11 +48,17 @@ class TrayIcon:
         self._get_seconds_remaining = get_seconds_remaining
         self._get_next_break_type = get_next_break_type
         self._is_paused = is_paused
+        self._config = config
+        self._get_position_seconds = get_position_seconds
+        self._get_current_position = get_current_position
+        self._on_show_settings = on_show_settings
+        self._on_show_stats = on_show_stats
 
         self._tray_process: Optional[subprocess.Popen] = None
         self._socket: Optional[socket.socket] = None
         self._update_timer_id: Optional[int] = None
         self._available = False
+        self._get_water_seconds: Optional[Callable[[], int]] = None
 
         self._setup_main_socket()
         self._start_tray_subprocess()
@@ -108,6 +121,16 @@ class TrayIcon:
                 self._on_skip()
             elif cmd == "take_break":
                 self._on_take_break()
+            elif cmd == "toggle_mode":
+                if self._config:
+                    new_mode = "recovery" if self._config.is_sit_stand else "sit_stand"
+                    self._config.set("mode", new_mode)
+            elif cmd == "show_settings":
+                if self._on_show_settings:
+                    self._on_show_settings()
+            elif cmd == "show_stats":
+                if self._on_show_stats:
+                    self._on_show_stats()
             elif cmd == "quit":
                 self._on_quit()
 
@@ -135,6 +158,9 @@ class TrayIcon:
                 "seconds": seconds,
                 "break_type": break_type,
                 "paused": paused,
+                "mode": self._config.mode if self._config else "recovery",
+                "position_seconds": self._get_position_seconds() if self._get_position_seconds else 0,
+                "current_position": self._get_current_position() if self._get_current_position else "sitting",
             }
 
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)

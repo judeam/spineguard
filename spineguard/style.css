@@ -1,92 +1,449 @@
 /* SpineGuard GTK4 Styles */
-/* Dark, calming color palette with deep blues and soft greens */
+/* "Clinical Vitality" — dark glass panels, luminous accents, layered depth */
 
-/* Break overlay window */
+/* ============================================================
+   COLOR SYSTEM
+   Base:    deep navy/slate    #0b1622 → #162638
+   Surface: frosted dark glass  rgba(14, 28, 44, 0.85)
+   Text:    ice white #e4eef5, muted #8a9bb0, dim #566378
+   Green:   vitality/success   #45d48a → #2db86e
+   Amber:   early/caution      #e8b84a → #d4a03c
+   Coral:   skipped/alert      #e86458 → #d44e42
+   Teal:    primary accent     #3a9cc5 → #2e8ab0
+   ============================================================ */
+
+/* --- Break overlay window --- */
 .break-overlay {
-    background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 50%, #1b3a4b 100%);
+    background: linear-gradient(160deg, #0b1622 0%, #0d1b2a 40%, #122840 100%);
 }
 
 .overlay-content {
     padding: 60px;
-    background-color: rgba(15, 30, 45, 0.85);
+    background-color: rgba(14, 28, 44, 0.88);
     border-radius: 24px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 1px rgba(58, 156, 197, 0.2);
+    animation: fadeIn 300ms ease-out;
 }
 
-/* Break icon (emoji) */
 .break-icon {
     font-size: 72px;
     margin-bottom: 10px;
 }
 
-/* Break type header */
 .break-header {
     font-size: 48px;
-    font-weight: bold;
-    color: #e8f4f8;
+    font-weight: 800;
+    color: #e4eef5;
     margin-bottom: 10px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.5px;
 }
 
-/* Break instruction */
 .break-instruction {
-    font-size: 24px;
-    color: #b8d4e3;
-    margin-bottom: 30px;
+    font-size: 22px;
+    font-weight: 400;
+    color: #8a9bb0;
+    margin-bottom: 20px;
 }
 
-/* Countdown timer area */
 .countdown-area {
     margin: 20px 0;
 }
 
-/* Health tip text */
 .health-tip {
-    font-size: 20px;
+    font-size: 18px;
     font-style: italic;
     color: #7ec8a3;
-    padding: 20px 40px;
-    background-color: rgba(60, 140, 100, 0.15);
-    border-radius: 12px;
-    border-left: 4px solid #5ab88a;
+    padding: 20px 28px;
+    background-color: rgba(45, 184, 110, 0.08);
+    border-radius: 14px;
+    border-left: 3px solid rgba(69, 212, 138, 0.5);
 }
 
 /* Buttons */
 .done-button {
-    padding: 16px 32px;
-    font-size: 18px;
+    padding: 16px 36px;
+    font-size: 17px;
     font-weight: 600;
-    background-color: #3a7ca5;
+    background: linear-gradient(135deg, #3a9cc5 0%, #2e8ab0 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(46, 138, 176, 0.3);
     transition: all 200ms ease;
 }
 
 .done-button:hover {
-    background-color: #4a9cc5;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(58, 124, 165, 0.4);
+    background: linear-gradient(135deg, #4aacda 0%, #3a9cc5 100%);
+    box-shadow: 0 6px 24px rgba(46, 138, 176, 0.45);
 }
 
 .skip-button {
-    padding: 16px 32px;
-    font-size: 18px;
+    padding: 16px 36px;
+    font-size: 17px;
     font-weight: 600;
     background-color: transparent;
-    color: #a0a8b0;
-    border: 2px solid #505860;
-    border-radius: 8px;
+    color: #8a9bb0;
+    border: 1px solid rgba(138, 155, 176, 0.25);
+    border-radius: 10px;
     transition: all 200ms ease;
 }
 
 .skip-button:hover {
-    background-color: rgba(160, 90, 80, 0.2);
-    border-color: #a05a50;
-    color: #c08070;
+    background-color: rgba(232, 100, 88, 0.1);
+    border-color: rgba(232, 100, 88, 0.4);
+    color: #e86458;
 }
 
-/* Tray menu styling */
+/* Position switch break variant */
+.position-switch .health-tip {
+    color: #7eb8e8;
+    background-color: rgba(60, 120, 180, 0.1);
+    border-left: 3px solid rgba(90, 156, 214, 0.5);
+}
+
+/* General text styling */
+label {
+    color: #e4eef5;
+}
+
+
+/* ============================================================
+   SETTINGS & STATS — SHARED PANEL SYSTEM
+   ============================================================ */
+
+/* Window backgrounds */
+.settings-window,
+.stats-window {
+    background: linear-gradient(170deg, #0b1622 0%, #0e1e30 50%, #0b1622 100%);
+}
+
+/* --- Cards --- */
+.panel-card {
+    background-color: rgba(14, 30, 50, 0.75);
+    border-radius: 16px;
+    border: 1px solid rgba(58, 156, 197, 0.08);
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.panel-card-inner {
+    background-color: rgba(11, 22, 34, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(138, 155, 176, 0.06);
+    padding: 16px 20px;
+}
+
+
+/* ============================================================
+   STATISTICS WINDOW
+   ============================================================ */
+
+/* Hero compliance section */
+.stats-hero-value {
+    font-size: 72px;
+    font-weight: 800;
+    color: #45d48a;
+    letter-spacing: -2px;
+}
+
+.stats-hero-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #566378;
+    letter-spacing: 2px;
+}
+
+.stats-hero-subtitle {
+    font-size: 16px;
+    color: #8a9bb0;
+    font-weight: 400;
+}
+
+/* Period tabs */
+.stats-period-tab {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #566378;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: all 150ms ease;
+    letter-spacing: 0.5px;
+}
+
+.stats-period-tab:hover {
+    color: #8a9bb0;
+    background-color: rgba(138, 155, 176, 0.06);
+}
+
+.stats-period-tab-active {
+    color: #e4eef5;
+    background-color: rgba(58, 156, 197, 0.12);
+    border: 1px solid rgba(58, 156, 197, 0.2);
+}
+
+/* Metric cards (completed / early / skipped) */
+.metric-card {
+    background-color: rgba(11, 22, 34, 0.7);
+    border-radius: 14px;
+    border: 1px solid rgba(138, 155, 176, 0.06);
+    padding: 20px 16px;
+    min-width: 120px;
+}
+
+.metric-value {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #566378;
+    margin-top: 4px;
+}
+
+/* Color variants for metrics */
+.metric-completed .metric-value { color: #45d48a; }
+.metric-completed { border-bottom: 2px solid rgba(69, 212, 138, 0.3); }
+
+.metric-early .metric-value { color: #e8b84a; }
+.metric-early { border-bottom: 2px solid rgba(232, 184, 74, 0.3); }
+
+.metric-skipped .metric-value { color: #e86458; }
+.metric-skipped { border-bottom: 2px solid rgba(232, 100, 88, 0.3); }
+
+/* Compliance progress bar (drawn via CSS on a DrawingArea) */
+.compliance-bar-bg {
+    background-color: rgba(138, 155, 176, 0.08);
+    border-radius: 6px;
+    min-height: 8px;
+}
+
+/* Breakdown rows */
+.breakdown-row {
+    padding: 14px 16px;
+    border-radius: 10px;
+    background-color: rgba(11, 22, 34, 0.4);
+    border: 1px solid rgba(138, 155, 176, 0.04);
+    transition: background-color 150ms ease;
+}
+
+.breakdown-row:hover {
+    background-color: rgba(11, 22, 34, 0.7);
+}
+
+.breakdown-type-icon {
+    font-size: 22px;
+    min-width: 36px;
+}
+
+.breakdown-type-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #c8d6e0;
+}
+
+.breakdown-count {
+    font-size: 20px;
+    font-weight: 700;
+    color: #e4eef5;
+}
+
+.breakdown-count-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #566378;
+}
+
+.breakdown-count-completed { color: #45d48a; }
+.breakdown-count-early { color: #e8b84a; }
+.breakdown-count-skipped { color: #e86458; }
+
+/* Section titles */
+.stats-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #566378;
+    margin-bottom: 8px;
+}
+
+/* Empty state */
+.stats-empty {
+    font-size: 16px;
+    color: #566378;
+    font-style: italic;
+}
+
+
+/* ============================================================
+   SETTINGS WINDOW
+   ============================================================ */
+
+/* Stack sidebar styling */
+.settings-window stacksidebar list {
+    background-color: rgba(11, 22, 34, 0.5);
+    border-right: 1px solid rgba(138, 155, 176, 0.06);
+    padding: 8px;
+}
+
+.settings-window stacksidebar row {
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 2px 4px;
+    color: #8a9bb0;
+    transition: all 150ms ease;
+}
+
+.settings-window stacksidebar row:selected {
+    background-color: rgba(58, 156, 197, 0.12);
+    color: #e4eef5;
+}
+
+/* Section header in settings panels */
+.settings-section-header {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #3a9cc5;
+}
+
+.settings-section-desc {
+    font-size: 13px;
+    color: #566378;
+    font-weight: 400;
+}
+
+/* Setting rows */
+.setting-row {
+    padding: 14px 20px;
+    background-color: rgba(11, 22, 34, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(138, 155, 176, 0.04);
+    transition: background-color 150ms ease;
+}
+
+.setting-row:hover {
+    background-color: rgba(14, 30, 50, 0.6);
+}
+
+.setting-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #c8d6e0;
+}
+
+.setting-sublabel {
+    font-size: 12px;
+    color: #566378;
+    font-weight: 400;
+}
+
+/* Styled controls */
+.settings-window spinbutton {
+    background-color: rgba(11, 22, 34, 0.8);
+    border: 1px solid rgba(138, 155, 176, 0.12);
+    border-radius: 8px;
+    color: #e4eef5;
+    padding: 6px 10px;
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.settings-window spinbutton:focus {
+    border-color: rgba(58, 156, 197, 0.4);
+    box-shadow: 0 0 0 2px rgba(58, 156, 197, 0.1);
+}
+
+.settings-window dropdown {
+    background-color: rgba(11, 22, 34, 0.8);
+    border: 1px solid rgba(138, 155, 176, 0.12);
+    border-radius: 8px;
+    color: #e4eef5;
+    padding: 6px 10px;
+    min-width: 140px;
+}
+
+.settings-window dropdown:focus {
+    border-color: rgba(58, 156, 197, 0.4);
+}
+
+.settings-window switch {
+    background-color: rgba(138, 155, 176, 0.15);
+    border-radius: 14px;
+}
+
+.settings-window switch:checked {
+    background-color: rgba(69, 212, 138, 0.35);
+}
+
+.settings-window switch slider {
+    background-color: #8a9bb0;
+    border-radius: 50%;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+.settings-window switch:checked slider {
+    background-color: #45d48a;
+}
+
+/* Time separator colon */
+.time-colon {
+    font-size: 20px;
+    font-weight: 700;
+    color: #566378;
+}
+
+/* Page titles inside stack */
+.settings-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #e4eef5;
+    letter-spacing: -0.3px;
+}
+
+.settings-page-subtitle {
+    font-size: 13px;
+    color: #566378;
+}
+
+/* Divider line */
+.settings-divider {
+    background-color: rgba(138, 155, 176, 0.06);
+    min-height: 1px;
+}
+
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; margin-top: 12px; }
+    to { opacity: 1; margin-top: 0; }
+}
+
+.panel-card {
+    animation: slideUp 250ms ease-out;
+}
+
+
+/* ============================================================
+   TRAY MENU (GTK3 — different process)
+   ============================================================ */
+
 .tray-menu {
     background-color: #1a2a3a;
     padding: 8px;
@@ -101,25 +458,4 @@
 
 .tray-menu-item:hover {
     background-color: #2a4a5a;
-}
-
-/* General text styling */
-label {
-    color: #e8f4f8;
-}
-
-/* Animations */
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.overlay-content {
-    animation: fadeIn 300ms ease-out;
 }

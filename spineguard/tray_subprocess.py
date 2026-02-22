@@ -32,7 +32,18 @@ except (ValueError, ImportError):
 
 from gi.repository import GLib, Gtk
 
+# Keybinder is X11-only; silently unavailable on Wayland
+try:
+    gi.require_version("Keybinder", "3.0")
+    from gi.repository import Keybinder
+    HAS_KEYBINDER = True
+except (ValueError, ImportError):
+    HAS_KEYBINDER = False
+
 SOCKET_PATH = Path.home() / ".local" / "share" / "spineguard" / "tray.sock"
+CONFIG_FILE = Path.home() / ".config" / "spineguard" / "config.json"
+INSTALL_DIR = Path.home() / ".local" / "share" / "spineguard"
+TRAY_ICON = INSTALL_DIR / "tray-icon.png"
 
 
 class TrayProcess:
@@ -42,20 +53,35 @@ class TrayProcess:
         self._indicator = None
         self._pause_item = None
         self._status_item = None
-        self._status = {"seconds": 1500, "break_type": "walk", "paused": False}
+        self._mode_item = None
+        self._position_item = None
+        self._status = {
+            "seconds": 1500, "break_type": "walk", "paused": False,
+            "mode": "recovery", "position_seconds": 0, "current_position": "sitting",
+        }
         self._socket = None
         self._running = True
 
         self._setup_indicator()
         self._setup_socket()
+        self._setup_keybindings()
 
     def _setup_indicator(self):
         """Set up the AppIndicator."""
-        self._indicator = AppIndicator3.Indicator.new(
-            "spineguard",
-            "appointment-soon",
-            AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
-        )
+        # Use custom tray icon if installed, fall back to system icon
+        if TRAY_ICON.exists():
+            self._indicator = AppIndicator3.Indicator.new(
+                "spineguard",
+                str(TRAY_ICON),
+                AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
+            )
+            self._indicator.set_icon_theme_path(str(INSTALL_DIR))
+        else:
+            self._indicator = AppIndicator3.Indicator.new(
+                "spineguard",
+                "appointment-soon",
+                AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
+            )
         self._indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
         menu = Gtk.Menu()
@@ -77,6 +103,26 @@ class TrayProcess:
         break_item = Gtk.MenuItem(label="Take Break Now")
         break_item.connect("activate", self._on_break)
         menu.append(break_item)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
+        self._mode_item = Gtk.MenuItem(label="Mode: Standard")
+        self._mode_item.connect("activate", self._on_toggle_mode)
+        menu.append(self._mode_item)
+
+        self._position_item = Gtk.MenuItem(label="")
+        self._position_item.set_sensitive(False)
+        menu.append(self._position_item)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
+        stats_item = Gtk.MenuItem(label="Statistics...")
+        stats_item.connect("activate", self._on_stats)
+        menu.append(stats_item)
+
+        settings_item = Gtk.MenuItem(label="Settings...")
+        settings_item.connect("activate", self._on_settings)
+        menu.append(settings_item)
 
         menu.append(Gtk.SeparatorMenuItem())
 
@@ -127,6 +173,7 @@ class TrayProcess:
         secs = seconds % 60
         break_type = self._status.get("break_type", "walk")
         paused = self._status.get("paused", False)
+        mode = self._status.get("mode", "recovery")
 
         break_name = "Walk" if break_type == "walk" else "Lie Down"
 
@@ -140,6 +187,24 @@ class TrayProcess:
         self._status_item.set_label(status)
         self._indicator.set_title(f"SpineGuard - {status}")
 
+        # Update mode item
+        if mode == "sit_stand":
+            self._mode_item.set_label("Mode: Sit-Stand (click to switch)")
+            # Show position countdown
+            pos_seconds = self._status.get("position_seconds", 0)
+            current_pos = self._status.get("current_position", "sitting")
+            pos_name = "Standing" if current_pos == "standing" else "Sitting"
+            if pos_seconds > 0:
+                pm = pos_seconds // 60
+                ps = pos_seconds % 60
+                self._position_item.set_label(f"{pos_name} - switch in {pm}:{ps:02d}")
+            else:
+                self._position_item.set_label(f"{pos_name}")
+            self._position_item.show()
+        else:
+            self._mode_item.set_label("Mode: Standard (click to switch)")
+            self._position_item.hide()
+
     def _send_command(self, cmd):
         """Send command to main process."""
         main_socket = Path.home() / ".local" / "share" / "spineguard" / "main.sock"
@@ -151,6 +216,9 @@ class TrayProcess:
             except Exception:
                 pass
 
+    def _on_toggle_mode(self, item):
+        self._send_command("toggle_mode")
+
     def _on_pause(self, item):
         self._send_command("pause_toggle")
 
@@ -160,9 +228,66 @@ class TrayProcess:
     def _on_break(self, item):
         self._send_command("take_break")
 
+    def _on_stats(self, item):
+        self._send_command("show_stats")
+
+    def _on_settings(self, item):
+        self._send_command("show_settings")
+
     def _on_quit(self, item):
         self._send_command("quit")
         Gtk.main_quit()
+
+    def _setup_keybindings(self):
+        """Set up global keyboard shortcuts via Keybinder (X11 only)."""
+        if not HAS_KEYBINDER:
+            return
+
+        try:
+            Keybinder.init()
+        except Exception:
+            return
+
+        # Read config directly (subprocess has no Config object)
+        config = {}
+        try:
+            if CONFIG_FILE.exists():
+                with open(CONFIG_FILE, "r") as f:
+                    config = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            pass
+
+        pause_key = config.get("hotkey_pause", "ctrl+shift+p")
+        break_key = config.get("hotkey_break", "ctrl+shift+b")
+
+        pause_accel = self._to_gtk_accelerator(pause_key)
+        break_accel = self._to_gtk_accelerator(break_key)
+
+        try:
+            Keybinder.bind(pause_accel, lambda _: self._send_command("pause_toggle"))
+        except Exception:
+            pass
+        try:
+            Keybinder.bind(break_accel, lambda _: self._send_command("take_break"))
+        except Exception:
+            pass
+
+    @staticmethod
+    def _to_gtk_accelerator(hotkey: str) -> str:
+        """Convert 'ctrl+shift+p' format to '<Primary><Shift>p' GTK accelerator format."""
+        parts = hotkey.lower().split("+")
+        accel = ""
+        key = parts[-1] if parts else ""
+        for part in parts[:-1]:
+            if part in ("ctrl", "control"):
+                accel += "<Primary>"
+            elif part == "shift":
+                accel += "<Shift>"
+            elif part == "alt":
+                accel += "<Alt>"
+            elif part == "super":
+                accel += "<Super>"
+        return accel + key
 
     def run(self):
         """Run the GTK main loop."""

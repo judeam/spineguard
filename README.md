@@ -1,14 +1,14 @@
 # SpineGuard
 
-A desktop application for Linux that enforces healthy breaks during computer work, specifically designed to aid recovery from lumbar disc injuries (L5-S1). Built with Python and GTK4.
+A desktop application for Linux that enforces healthy breaks during computer work to protect your back and promote better posture. Built with Python and GTK4.
 
 ![Walk Break](assets/walk-break.png)
 
 ## Overview
 
-SpineGuard uses a modified Pomodoro technique tailored for spinal health. Every 25 minutes, a full-screen overlay appears prompting you to take a break. Breaks alternate between walking (5 minutes) and lying down (10 minutes) to promote disc decompression and prevent prolonged sitting.
+SpineGuard uses a modified Pomodoro technique designed around back health. Every 25 minutes, a full-screen overlay appears prompting you to take a break. Breaks alternate between walking (5 minutes) and lying down (10 minutes) to encourage movement, relieve pressure, and counteract prolonged sitting.
 
-The overlay cannot be minimized or hidden, ensuring you actually take the break your spine needs.
+The overlay cannot be minimized or hidden, ensuring you actually take the break your back needs.
 
 ## Screenshots
 
@@ -37,9 +37,9 @@ The overlay cannot be minimized or hidden, ensuring you actually take the break 
 ### Health Tips
 Each break displays a randomly selected tip relevant to the activity:
 - Posture guidance for walking breaks
-- Decompression positions for lying down (including the 90-90 position)
-- McKenzie method cues
-- General L5-S1 recovery advice
+- Restorative positions for lying down (including the 90-90 position)
+- Gentle stretches and mobility exercises
+- General back health and ergonomics advice
 
 ### System Integration
 - System tray icon with timer countdown
@@ -173,9 +173,9 @@ spineguard/
 
 ## Why SpineGuard?
 
-Disc injuries like L5-S1 extrusions require consistent movement and position changes throughout the day. Standard Pomodoro timers don't enforce breaks strongly enough, and it's easy to dismiss a small notification when focused on work.
+Prolonged sitting is one of the worst things you can do for your back. Standard Pomodoro timers don't enforce breaks strongly enough, and it's easy to dismiss a small notification when focused on work.
 
-SpineGuard's full-screen overlay makes ignoring breaks impossible, while the alternating walk/lie-down pattern ensures both movement and decompression time for the spine.
+SpineGuard's full-screen overlay makes ignoring breaks impossible, while the alternating walk/lie-down pattern ensures both movement and rest for your back. Whether you want to maintain good back health or improve it, consistent breaks are the single most effective habit you can build.
 
 ## License
 
