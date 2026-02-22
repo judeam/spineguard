@@ -14,11 +14,12 @@ from .config import Config
 class SettingsDialog(Gtk.Window):
     """Refined GTK4 preferences dialog with sidebar navigation."""
 
-    def __init__(self, config: Config, application: Optional[Gtk.Application] = None):
+    def __init__(self, config: Config, application: Optional[Gtk.Application] = None, routine_progress=None):
         super().__init__(title="SpineGuard — Settings")
         if application:
             self.set_application(application)
         self._config = config
+        self._routine_progress = routine_progress
         self.set_default_size(620, 560)
         self.set_resizable(True)
         self.add_css_class("settings-window")
@@ -541,10 +542,9 @@ class SettingsDialog(Gtk.Window):
         return scrolled
 
     def _on_reset_progress(self, button):
-        """Reset all routine progress after confirmation."""
-        from .routines import RoutineProgress
-        rp = RoutineProgress()
-        rp.reset_progress()
+        """Reset all routine progress."""
+        if self._routine_progress:
+            self._routine_progress.reset_progress()
 
     # ── Handlers ─────────────────────────────────────────────
 

@@ -515,7 +515,7 @@ class SpineGuardApp(Gtk.Application):
         if self._settings_window:
             self._settings_window.present()
             return
-        self._settings_window = SettingsDialog(self._config, application=self)
+        self._settings_window = SettingsDialog(self._config, application=self, routine_progress=self._routine_progress)
         self._settings_window.connect("close-request", self._on_settings_closed)
         self._settings_window.present()
 

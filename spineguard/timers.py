@@ -87,12 +87,17 @@ class TimerManager:
                 pass
 
     def _save_state(self):
-        """Save state to disk."""
+        """Save state to disk (merge with existing state)."""
         self._ensure_state_dir()
-        state = {
-            "next_break_type": self._next_break_type,
-            "current_position": self._current_position,
-        }
+        state = {}
+        if STATE_FILE.exists():
+            try:
+                with open(STATE_FILE, "r") as f:
+                    state = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+        state["next_break_type"] = self._next_break_type
+        state["current_position"] = self._current_position
         try:
             with open(STATE_FILE, "w") as f:
                 json.dump(state, f)
