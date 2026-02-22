@@ -19,6 +19,8 @@ class BreakType:
     LIE_DOWN = "lie_down"
     POSITION_SWITCH = "position_switch"
     PHYSIO = "physio"
+    BREATHING = "breathing"
+    EYE_REST = "eye_rest"
 
 
 class TimerManager:
@@ -49,6 +51,15 @@ class TimerManager:
         self._position_countdown_id: Optional[int] = None
         self._position_seconds_remaining: int = 0
         self._current_position: str = "sitting"
+
+        # Breathing break timer
+        self._breathing_callback: Optional[Callable[[], None]] = None
+        self._pomodoro_cycle_count: int = 0
+
+        # Eye rest timer
+        self._eye_rest_callback: Optional[Callable[[], None]] = None
+        self._eye_rest_countdown_id: Optional[int] = None
+        self._eye_rest_seconds_remaining: int = 0
 
         self._seconds_remaining: int = self._config.get("pomodoro_minutes") * 60
         self._paused: bool = False
@@ -112,6 +123,14 @@ class TimerManager:
         """Set callback for pre-break warnings. Receives (break_type, seconds_remaining)."""
         self._pre_break_warning_callback = callback
 
+    def set_breathing_callback(self, callback: Callable[[], None]):
+        """Set callback for breathing break reminders."""
+        self._breathing_callback = callback
+
+    def set_eye_rest_callback(self, callback: Callable[[], None]):
+        """Set callback for eye rest micro-breaks."""
+        self._eye_rest_callback = callback
+
     def start(self):
         """Start all timers."""
         self._start_pomodoro_countdown()
@@ -121,6 +140,7 @@ class TimerManager:
             self._schedule_physio_check()
         if self._config.is_sit_stand:
             self._start_position_timer()
+        self._start_eye_rest_timer()
 
     def stop(self):
         """Stop all timers."""
@@ -140,6 +160,7 @@ class TimerManager:
             GLib.source_remove(self._physio_timer_id)
             self._physio_timer_id = None
         self._stop_position_timer()
+        self._stop_eye_rest_timer()
 
     def pause(self):
         """Pause the pomodoro timer."""
@@ -187,8 +208,10 @@ class TimerManager:
 
     def break_completed(self):
         """Called when a break is completed. Alternates break type and resets timer."""
+        self._pomodoro_cycle_count += 1
         self._alternate_break_type()
         self.reset_pomodoro()
+        self._check_breathing_break()
 
     def _alternate_break_type(self):
         """Switch between walk and lie down breaks."""
@@ -242,6 +265,48 @@ class TimerManager:
 
         return True
 
+    # --- Breathing timer ---
+
+    def _check_breathing_break(self):
+        """Check if a breathing break should trigger after a pomodoro cycle."""
+        if not self._config.get("breathing_enabled"):
+            return
+        freq = self._config.get("breathing_frequency")
+        if freq and self._pomodoro_cycle_count > 0 and self._pomodoro_cycle_count % freq == 0:
+            if self._breathing_callback:
+                self._breathing_callback()
+
+    # --- Eye rest timer ---
+
+    def _start_eye_rest_timer(self):
+        """Start the eye rest micro-break countdown."""
+        self._stop_eye_rest_timer()
+        if not self._config.get("eye_rest_enabled"):
+            return
+        interval = self._config.get("eye_rest_interval_minutes")
+        self._eye_rest_seconds_remaining = interval * 60
+        self._eye_rest_countdown_id = GLib.timeout_add_seconds(1, self._eye_rest_tick)
+
+    def _stop_eye_rest_timer(self):
+        """Stop the eye rest timer."""
+        if self._eye_rest_countdown_id:
+            GLib.source_remove(self._eye_rest_countdown_id)
+            self._eye_rest_countdown_id = None
+        self._eye_rest_seconds_remaining = 0
+
+    def _eye_rest_tick(self) -> bool:
+        """Called every second to update eye rest countdown."""
+        if self._paused:
+            return True
+        self._eye_rest_seconds_remaining -= 1
+        if self._eye_rest_seconds_remaining <= 0:
+            if self._eye_rest_callback:
+                self._eye_rest_callback()
+            # Restart
+            interval = self._config.get("eye_rest_interval_minutes")
+            self._eye_rest_seconds_remaining = interval * 60
+        return True
+
     def _on_config_change(self, key: str, value: Any):
         """Handle live config changes."""
         if key == "mode":
@@ -256,6 +321,11 @@ class TimerManager:
                 if self._physio_timer_id:
                     GLib.source_remove(self._physio_timer_id)
                     self._physio_timer_id = None
+        elif key == "eye_rest_enabled":
+            if value:
+                self._start_eye_rest_timer()
+            else:
+                self._stop_eye_rest_timer()
 
     # --- Pomodoro timer ---
 
