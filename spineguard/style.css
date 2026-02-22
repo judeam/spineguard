@@ -101,6 +101,65 @@
     border-left: 3px solid rgba(90, 156, 214, 0.5);
 }
 
+/* Track info bar */
+.track-info-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #3a9cc5;
+    padding: 8px 16px;
+    background-color: rgba(58, 156, 197, 0.08);
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+}
+
+/* Streak counter */
+.streak-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e8b84a;
+    letter-spacing: 0.3px;
+}
+
+/* Breathing phase label */
+.breathing-phase-label {
+    font-size: 24px;
+    font-weight: 400;
+    color: #8a9bb0;
+    margin-top: 10px;
+}
+
+/* Micro-break overlay */
+.micro-break-overlay {
+    background-color: rgba(11, 22, 34, 0.92);
+    border-radius: 20px;
+    border: 1px solid rgba(58, 156, 197, 0.15);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.micro-break-icon {
+    font-size: 48px;
+}
+
+.micro-break-message {
+    font-size: 20px;
+    font-weight: 500;
+    color: #e4eef5;
+}
+
+.micro-break-countdown {
+    font-size: 36px;
+    font-weight: 700;
+    color: #3a9cc5;
+}
+
+/* Level-up flash */
+.level-up-label {
+    font-size: 28px;
+    font-weight: 800;
+    color: #45d48a;
+    animation: fadeIn 300ms ease-out;
+}
+
 /* General text styling */
 label {
     color: #e4eef5;
