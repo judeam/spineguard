@@ -7,11 +7,7 @@ from typing import Any, Callable, Optional
 
 from gi.repository import GLib
 
-from .config import Config
-
-# State directory
-STATE_DIR = Path.home() / ".local" / "share" / "spineguard"
-STATE_FILE = STATE_DIR / "state.json"
+from .config import Config, STATE_DIR, STATE_FILE
 
 
 class BreakType:
@@ -149,21 +145,12 @@ class TimerManager:
 
     def stop(self):
         """Stop all timers."""
-        if self._pomodoro_timer_id:
-            GLib.source_remove(self._pomodoro_timer_id)
-            self._pomodoro_timer_id = None
-        if self._countdown_timer_id:
-            GLib.source_remove(self._countdown_timer_id)
-            self._countdown_timer_id = None
-        if self._water_countdown_id:
-            GLib.source_remove(self._water_countdown_id)
-            self._water_countdown_id = None
-        if self._supplement_timer_id:
-            GLib.source_remove(self._supplement_timer_id)
-            self._supplement_timer_id = None
-        if self._physio_timer_id:
-            GLib.source_remove(self._physio_timer_id)
-            self._physio_timer_id = None
+        for attr in ("_pomodoro_timer_id", "_countdown_timer_id", "_water_countdown_id",
+                     "_supplement_timer_id", "_physio_timer_id"):
+            tid = getattr(self, attr)
+            if tid:
+                GLib.source_remove(tid)
+                setattr(self, attr, None)
         self._stop_position_timer()
         self._stop_eye_rest_timer()
 

@@ -470,52 +470,38 @@ def get_breathing_exercise() -> dict:
     return random.choice(BREATHING_EXERCISES)
 
 
-def get_walk_routine() -> dict:
-    """Get a random walk routine."""
+def _random_routine(tracks: dict) -> dict:
+    """Get a random routine from any track."""
     all_routines = []
-    for track in WALK_TRACKS.values():
+    for track in tracks.values():
         all_routines.extend(track["routines"])
     return random.choice(all_routines)
+
+
+def get_walk_routine() -> dict:
+    """Get a random walk routine."""
+    return _random_routine(WALK_TRACKS)
 
 
 def get_lie_down_routine() -> dict:
     """Get a random lie-down routine."""
-    all_routines = []
-    for track in LIE_DOWN_TRACKS.values():
-        all_routines.extend(track["routines"])
-    return random.choice(all_routines)
+    return _random_routine(LIE_DOWN_TRACKS)
 
 
-def get_walk_tip() -> str:
-    """Get a random tip for walk breaks."""
-    all_tips = WALK_TIPS + GENERAL_TIPS
-    return random.choice(all_tips)
+_TIP_SOURCES = {
+    "walk": WALK_TIPS + GENERAL_TIPS,
+    "lie_down": LIE_DOWN_TIPS + GENERAL_TIPS,
+    "position_switch": POSITION_SWITCH_TIPS + GENERAL_TIPS,
+    "water": WATER_TIPS,
+    "physio": PHYSIO_TIPS,
+}
 
 
-def get_lie_down_tip() -> str:
-    """Get a random tip for lie down breaks."""
-    all_tips = LIE_DOWN_TIPS + GENERAL_TIPS
-    return random.choice(all_tips)
-
-
-def get_water_tip() -> str:
-    """Get a random water reminder."""
-    return random.choice(WATER_TIPS)
-
-
-def get_position_switch_tip() -> str:
-    """Get a random tip for position switch breaks."""
-    all_tips = POSITION_SWITCH_TIPS + GENERAL_TIPS
-    return random.choice(all_tips)
-
-
-def get_physio_tip() -> str:
-    """Get a random tip for physio workout breaks."""
-    return random.choice(PHYSIO_TIPS)
+def get_tip(tip_type: str) -> str:
+    """Get a random tip for the given break/reminder type."""
+    return random.choice(_TIP_SOURCES[tip_type])
 
 
 def get_supplement_tip(morning: bool) -> str:
     """Get a supplement reminder for morning or evening."""
-    if morning:
-        return random.choice(SUPPLEMENT_MORNING)
-    return random.choice(SUPPLEMENT_EVENING)
+    return random.choice(SUPPLEMENT_MORNING if morning else SUPPLEMENT_EVENING)

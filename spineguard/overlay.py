@@ -15,6 +15,16 @@ from . import tips
 from .timers import BreakType
 
 
+def _keep_above_on_realize(widget):
+    """Ensure window stays on top via surface (shared by all overlay types)."""
+    try:
+        surface = widget.get_surface()
+        if surface and hasattr(surface, "set_keep_above"):
+            surface.set_keep_above(True)
+    except Exception:
+        pass
+
+
 class BlockingOverlay(Gtk.Window):
     """Simple fullscreen dark overlay for secondary monitors during breaks."""
 
@@ -38,15 +48,7 @@ class BlockingOverlay(Gtk.Window):
         else:
             self.fullscreen()
 
-        self.connect("realize", self._on_realize)
-
-    def _on_realize(self, widget):
-        try:
-            surface = self.get_surface()
-            if surface and hasattr(surface, "set_keep_above"):
-                surface.set_keep_above(True)
-        except Exception:
-            pass
+        self.connect("realize", _keep_above_on_realize)
 
 
 class BreakOverlay(Gtk.Window):
@@ -119,17 +121,7 @@ class BreakOverlay(Gtk.Window):
         self.add_css_class("break-overlay")
 
         # Connect to realize signal to ensure it stays on top
-        self.connect("realize", self._on_realize)
-
-    def _on_realize(self, widget):
-        """Called when window is realized - set always on top via surface."""
-        try:
-            surface = self.get_surface()
-            if surface and hasattr(surface, "set_keep_above"):
-                surface.set_keep_above(True)
-        except Exception:
-            # Wayland compositors may not support this — known limitation
-            pass
+        self.connect("realize", _keep_above_on_realize)
 
     def _build_ui(self):
         """Build the overlay UI."""
@@ -212,12 +204,7 @@ class BreakOverlay(Gtk.Window):
 
         # Health tip or routine
         if self._break_type == BreakType.PHYSIO:
-            tip_text = tips.get_physio_tip()
-            self._tip_label = Gtk.Label(label=tip_text)
-            self._tip_label.set_wrap(True)
-            self._tip_label.set_max_width_chars(60)
-            self._tip_label.set_justify(Gtk.Justification.CENTER)
-            self._tip_label.add_css_class("health-tip")
+            self._tip_label = self._make_tip_label(tips.get_tip("physio"))
             main_box.append(self._tip_label)
         else:
             use_routine = (
@@ -233,32 +220,19 @@ class BreakOverlay(Gtk.Window):
                 else:
                     self._routine = tips.get_lie_down_routine()
 
-                # Routine name as header
                 routine_header = Gtk.Label(label=self._routine["name"])
                 routine_header.add_css_class("break-instruction")
                 main_box.append(routine_header)
 
-                # Current step instruction (updated in _tick)
-                first_step = self._routine["steps"][0]["instruction"]
-                self._tip_label = Gtk.Label(label=first_step)
-                self._tip_label.set_wrap(True)
-                self._tip_label.set_max_width_chars(60)
-                self._tip_label.set_justify(Gtk.Justification.CENTER)
-                self._tip_label.add_css_class("health-tip")
+                self._tip_label = self._make_tip_label(self._routine["steps"][0]["instruction"])
                 main_box.append(self._tip_label)
             else:
-                if self._break_type == BreakType.POSITION_SWITCH:
-                    tip_text = tips.get_position_switch_tip()
-                elif self._break_type == BreakType.WALK:
-                    tip_text = tips.get_walk_tip()
-                else:
-                    tip_text = tips.get_lie_down_tip()
+                tip_type = {
+                    BreakType.POSITION_SWITCH: "position_switch",
+                    BreakType.WALK: "walk",
+                }.get(self._break_type, "lie_down")
 
-                self._tip_label = Gtk.Label(label=tip_text)
-                self._tip_label.set_wrap(True)
-                self._tip_label.set_max_width_chars(60)
-                self._tip_label.set_justify(Gtk.Justification.CENTER)
-                self._tip_label.add_css_class("health-tip")
+                self._tip_label = self._make_tip_label(tips.get_tip(tip_type))
                 main_box.append(self._tip_label)
 
         # Buttons
@@ -439,11 +413,25 @@ class BreakOverlay(Gtk.Window):
 
         return True
 
-    def _finish(self):
-        """Break completed normally."""
+    @staticmethod
+    def _make_tip_label(text: str) -> Gtk.Label:
+        """Create a styled tip/instruction label."""
+        label = Gtk.Label(label=text)
+        label.set_wrap(True)
+        label.set_max_width_chars(60)
+        label.set_justify(Gtk.Justification.CENTER)
+        label.add_css_class("health-tip")
+        return label
+
+    def _stop_timer(self):
+        """Cancel the countdown GLib timer if running."""
         if self._timer_id:
             GLib.source_remove(self._timer_id)
             self._timer_id = None
+
+    def _finish(self):
+        """Break completed normally."""
+        self._stop_timer()
         if self._sound_player:
             self._sound_player.play_break_end()
         self.close()
@@ -451,9 +439,7 @@ class BreakOverlay(Gtk.Window):
 
     def _on_done_early(self, button):
         """User finished break early."""
-        if self._timer_id:
-            GLib.source_remove(self._timer_id)
-            self._timer_id = None
+        self._stop_timer()
         self.close()
         if self._on_done_early_cb:
             self._on_done_early_cb()
@@ -462,8 +448,6 @@ class BreakOverlay(Gtk.Window):
 
     def _on_skip_clicked(self, button):
         """User skipped the break (emergency)."""
-        if self._timer_id:
-            GLib.source_remove(self._timer_id)
-            self._timer_id = None
+        self._stop_timer()
         self.close()
         self._on_skip()

@@ -165,11 +165,7 @@ class SpineGuardApp(Gtk.Application):
         # Compute track info for walk/lie-down breaks
         track_info = None
         if break_type in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
-            from . import tips
-            tracks = tips.WALK_TRACKS if break_type == BreakType.WALK else tips.LIE_DOWN_TRACKS
-            pinned_key = "pinned_walk_track" if break_type == BreakType.WALK else "pinned_lie_down_track"
-            pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
-            track_id = self._routine_progress.get_today_track_id(tracks, pinned)
+            tracks, track_id = self._get_track_info(break_type)
             routine = self._routine_progress.get_routine(tracks, track_id)
             if routine:
                 context["routine"] = routine
@@ -227,6 +223,43 @@ class SpineGuardApp(Gtk.Application):
             blocker.close()
         self._blocking_overlays.clear()
 
+    def _end_break(self, outcome=None):
+        """Close break overlay and log stats. Returns the break type that ended."""
+        bt = self._current_break_type
+        self._close_blocking_overlays()
+        self._current_overlay = None
+        self._current_break_type = None
+        if bt and outcome:
+            getattr(self._stats_manager, f"log_break_{outcome}")(bt)
+        return bt
+
+    def _get_track_info(self, break_type):
+        """Get (tracks_dict, track_id) for walk/lie-down breaks."""
+        from . import tips
+        tracks = tips.WALK_TRACKS if break_type == BreakType.WALK else tips.LIE_DOWN_TRACKS
+        pinned_key = "pinned_walk_track" if break_type == BreakType.WALK else "pinned_lie_down_track"
+        pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
+        return tracks, self._routine_progress.get_today_track_id(tracks, pinned)
+
+    def _record_routine(self, bt):
+        """Record routine completion and day streak for walk/lie-down breaks."""
+        if bt in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
+            tracks, track_id = self._get_track_info(bt)
+            self._routine_progress.record_completion(track_id, tracks)
+        if self._routine_progress:
+            self._routine_progress.record_day_completion()
+
+    def _show_singleton(self, attr, cls, *args, **kwargs):
+        """Show a singleton window, creating it if needed."""
+        existing = getattr(self, attr)
+        if existing:
+            existing.present()
+            return
+        win = cls(*args, **kwargs)
+        setattr(self, attr, win)
+        win.connect("close-request", lambda w: setattr(self, attr, None) or False)
+        win.present()
+
     def _on_monitors_changed(self, model, position, removed, added):
         """Handle monitor hotplug during a break."""
         if not self._current_overlay:
@@ -247,11 +280,9 @@ class SpineGuardApp(Gtk.Application):
     def _on_pomodoro_complete(self, break_type: str):
         """Called when pomodoro timer completes - show break overlay."""
         if self._current_overlay:
-            return  # Already showing a break
-
+            return
         self._sound_player.play_break_start()
         duration = self._timer_manager.get_break_duration(break_type)
-
         self._show_break_overlay(
             break_type=break_type,
             duration=duration,
@@ -262,50 +293,19 @@ class SpineGuardApp(Gtk.Application):
 
     def _on_break_complete(self):
         """Called when break timer runs to zero."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_completed(bt)
-        if bt in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
-            from . import tips
-            tracks = tips.WALK_TRACKS if bt == BreakType.WALK else tips.LIE_DOWN_TRACKS
-            pinned_key = "pinned_walk_track" if bt == BreakType.WALK else "pinned_lie_down_track"
-            pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
-            track_id = self._routine_progress.get_today_track_id(tracks, pinned)
-            self._routine_progress.record_completion(track_id, tracks)
-        if self._routine_progress:
-            self._routine_progress.record_day_completion()
+        bt = self._end_break("completed")
+        self._record_routine(bt)
         self._timer_manager.break_completed()
 
     def _on_break_done_early(self):
         """Called when user clicks Done Early."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_done_early(bt)
-        if bt in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
-            from . import tips
-            tracks = tips.WALK_TRACKS if bt == BreakType.WALK else tips.LIE_DOWN_TRACKS
-            pinned_key = "pinned_walk_track" if bt == BreakType.WALK else "pinned_lie_down_track"
-            pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
-            track_id = self._routine_progress.get_today_track_id(tracks, pinned)
-            self._routine_progress.record_completion(track_id, tracks)
-        if self._routine_progress:
-            self._routine_progress.record_day_completion()
+        bt = self._end_break("done_early")
+        self._record_routine(bt)
         self._timer_manager.break_completed()
 
     def _on_break_skipped(self):
         """Called when break is skipped (emergency)."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_skipped(bt)
+        self._end_break("skipped")
         if self._routine_progress:
             self._routine_progress.record_skip()
         self._timer_manager.skip_break()
@@ -317,116 +317,64 @@ class SpineGuardApp(Gtk.Application):
         if self._current_overlay:
             self._timer_manager.position_switch_completed()
             return
-
         self._sound_player.play_break_start()
-
         current = self._timer_manager.get_current_position()
         next_position = "standing" if current == "sitting" else "sitting"
         duration = self._timer_manager.get_break_duration(break_type)
-
         self._show_break_overlay(
             break_type=break_type,
             duration=duration,
             on_complete=self._on_position_switch_complete,
-            on_skip=self._on_position_switch_skipped,
+            on_skip=self._on_position_switch_complete,
             context={"next_position": next_position},
         )
 
     def _on_position_switch_complete(self):
-        """Called when position switch break completes."""
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
+        """Called when position switch break completes or is skipped."""
+        self._end_break()
         self._timer_manager.position_switch_completed()
 
-    def _on_position_switch_skipped(self):
-        """Called when position switch break is skipped."""
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        self._timer_manager.position_switch_completed()
-
-    # --- Physio break callbacks ---
+    # --- Physio / Breathing break callbacks (shared) ---
 
     def _on_physio_reminder(self):
         """Called when physio workout time arrives."""
         if self._current_overlay:
-            return  # Already showing a break
-
+            return
         self._sound_player.play_break_start()
-
         self._show_break_overlay(
             break_type=BreakType.PHYSIO,
             duration=None,
-            on_complete=self._on_physio_complete,
-            on_skip=self._on_physio_skipped,
+            on_complete=self._on_simple_break_complete,
+            on_skip=self._on_simple_break_skipped,
         )
-
-    def _on_physio_complete(self):
-        """Called when user clicks Done on physio break."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_completed(bt)
-
-    def _on_physio_skipped(self):
-        """Called when physio break is skipped."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_skipped(bt)
-
-    # --- Breathing break callbacks ---
 
     def _on_breathing_break(self):
         """Called when a breathing break should trigger."""
         if self._current_overlay:
             return
-
         from . import tips
         exercise = tips.get_breathing_exercise()
-
         self._sound_player.play_break_start()
-
         self._show_break_overlay(
             break_type=BreakType.BREATHING,
             duration=2,
-            on_complete=self._on_breathing_complete,
-            on_skip=self._on_breathing_skipped,
-            on_done_early=self._on_breathing_done_early,
+            on_complete=self._on_simple_break_complete,
+            on_skip=self._on_simple_break_skipped,
+            on_done_early=self._on_simple_break_done_early,
             context={"breathing_exercise": exercise},
         )
 
-    def _on_breathing_complete(self):
-        """Called when breathing break timer runs to zero."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_completed(bt)
+    def _on_simple_break_complete(self):
+        """Called when physio/breathing break completes."""
+        self._end_break("completed")
 
-    def _on_breathing_done_early(self):
-        """Called when user clicks Done Early on breathing break."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_done_early(bt)
+    def _on_simple_break_done_early(self):
+        """Called when physio/breathing break is done early."""
+        self._end_break("done_early")
 
-    def _on_breathing_skipped(self):
-        """Called when breathing break is skipped."""
-        bt = self._current_break_type
-        self._close_blocking_overlays()
-        self._current_overlay = None
-        self._current_break_type = None
-        if bt:
-            self._stats_manager.log_break_skipped(bt)
+    def _on_simple_break_skipped(self):
+        """Called when physio/breathing break is skipped."""
+        self._end_break("skipped")
 
     # --- Eye rest callbacks ---
 
@@ -512,31 +460,14 @@ class SpineGuardApp(Gtk.Application):
 
     def _on_show_settings(self):
         """Show the settings dialog."""
-        if self._settings_window:
-            self._settings_window.present()
-            return
-        self._settings_window = SettingsDialog(self._config, application=self, routine_progress=self._routine_progress)
-        self._settings_window.connect("close-request", self._on_settings_closed)
-        self._settings_window.present()
-
-    def _on_settings_closed(self, window):
-        """Called when settings window is closed."""
-        self._settings_window = None
-        return False
+        self._show_singleton(
+            "_settings_window", SettingsDialog,
+            self._config, application=self, routine_progress=self._routine_progress,
+        )
 
     def _on_show_stats(self):
         """Show the statistics window."""
-        if self._stats_window:
-            self._stats_window.present()
-            return
-        self._stats_window = StatsWindow(self._stats_manager, application=self)
-        self._stats_window.connect("close-request", self._on_stats_closed)
-        self._stats_window.present()
-
-    def _on_stats_closed(self, window):
-        """Called when stats window is closed."""
-        self._stats_window = None
-        return False
+        self._show_singleton("_stats_window", StatsWindow, self._stats_manager, application=self)
 
     def _on_quit(self):
         """Quit the application."""

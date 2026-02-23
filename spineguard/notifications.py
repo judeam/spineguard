@@ -14,7 +14,7 @@ class NotificationManager:
     def show_water_reminder(self):
         """Show a water reminder notification."""
         notification = Gio.Notification.new("Water Reminder")
-        notification.set_body(tips.get_water_tip())
+        notification.set_body(tips.get_tip("water"))
         notification.set_priority(Gio.NotificationPriority.NORMAL)
         notification.add_button("Snooze 10 min", "app.snooze-water")
         self._app.send_notification("water-reminder", notification)

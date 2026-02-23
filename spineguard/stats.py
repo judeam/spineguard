@@ -12,8 +12,7 @@ gi.require_version("Gtk", "4.0")
 
 from gi.repository import Gtk
 
-STATE_DIR = Path.home() / ".local" / "share" / "spineguard"
-STATS_FILE = STATE_DIR / "stats.jsonl"
+from .config import STATE_DIR, STATS_FILE
 
 
 class StatsManager:

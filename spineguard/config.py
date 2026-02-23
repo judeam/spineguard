@@ -7,6 +7,10 @@ from typing import Any, Callable, Optional
 CONFIG_DIR = Path.home() / ".config" / "spineguard"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
+STATE_DIR = Path.home() / ".local" / "share" / "spineguard"
+STATE_FILE = STATE_DIR / "state.json"
+STATS_FILE = STATE_DIR / "stats.jsonl"
+
 DEFAULTS = {
     "mode": "recovery",
     "pomodoro_minutes": 25,

@@ -9,6 +9,8 @@ gi.require_version("Gdk", "4.0")
 
 from gi.repository import GLib, Gtk
 
+from .overlay import _keep_above_on_realize
+
 
 class MicroBreakOverlay(Gtk.Window):
     """Small centered popup for brief micro-breaks (e.g., 20-second eye rest)."""
@@ -60,16 +62,8 @@ class MicroBreakOverlay(Gtk.Window):
 
         self.set_child(box)
 
-        self.connect("realize", self._on_realize)
+        self.connect("realize", _keep_above_on_realize)
         self._timer_id = GLib.timeout_add_seconds(1, self._tick)
-
-    def _on_realize(self, widget):
-        try:
-            surface = self.get_surface()
-            if surface and hasattr(surface, "set_keep_above"):
-                surface.set_keep_above(True)
-        except Exception:
-            pass
 
     def _tick(self) -> bool:
         self._seconds_remaining -= 1

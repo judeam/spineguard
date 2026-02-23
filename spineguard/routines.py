@@ -6,9 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from . import tips
-
-STATE_DIR = Path.home() / ".local" / "share" / "spineguard"
-STATE_FILE = STATE_DIR / "state.json"
+from .config import STATE_DIR, STATE_FILE
 
 # Daily rotation: day-of-week (0=Mon) maps to track index
 ROTATION = [0, 1, 2, 0, 1, 2, 0]  # Mon=0, Tue=1, Wed=2, Thu=0, ...
