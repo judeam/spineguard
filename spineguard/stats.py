@@ -114,6 +114,8 @@ _BREAK_META = {
     "walk":            {"icon": "\U0001f6b6", "name": "Walk Breaks"},
     "lie_down":        {"icon": "\U0001f6cf\ufe0f", "name": "Lie-Down Breaks"},
     "position_switch": {"icon": "\U0001f9cd", "name": "Position Switches"},
+    "breathing":       {"icon": "\U0001f32c\ufe0f", "name": "Breathing Breaks"},
+    "eye_rest":        {"icon": "\U0001f440", "name": "Eye Rest Breaks"},
 }
 
 
@@ -279,7 +281,7 @@ class StatsWindow(Gtk.Window):
 
             breakdown_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
 
-            for break_type in ("walk", "lie_down", "position_switch"):
+            for break_type in ("walk", "lie_down", "position_switch", "breathing", "eye_rest"):
                 if break_type not in summary["by_type"]:
                     continue
                 bt = summary["by_type"][break_type]

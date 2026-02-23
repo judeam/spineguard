@@ -22,6 +22,8 @@ from .sounds import SoundPlayer
 from .stats import StatsManager, StatsWindow
 from .timers import BreakType, TimerManager
 from .tray import TrayIcon
+from .micro_overlay import MicroBreakOverlay
+from .routines import RoutineProgress
 
 
 class SpineGuardApp(Gtk.Application):
@@ -53,6 +55,8 @@ class SpineGuardApp(Gtk.Application):
         # Singleton windows
         self._settings_window: Optional[SettingsDialog] = None
         self._stats_window: Optional[StatsWindow] = None
+        self._routine_progress: Optional[RoutineProgress] = None
+        self._current_micro_overlay: Optional[MicroBreakOverlay] = None
 
     def do_activate(self):
         """Called when the application is activated."""
@@ -65,6 +69,7 @@ class SpineGuardApp(Gtk.Application):
         self._notification_manager = NotificationManager(self)
         self._sound_player = SoundPlayer(config=self._config)
         self._stats_manager = StatsManager()
+        self._routine_progress = RoutineProgress()
 
         # Set up timer callbacks
         self._timer_manager.set_pomodoro_callback(self._on_pomodoro_complete)
@@ -73,6 +78,8 @@ class SpineGuardApp(Gtk.Application):
         self._timer_manager.set_position_callback(self._on_position_switch)
         self._timer_manager.set_physio_callback(self._on_physio_reminder)
         self._timer_manager.set_pre_break_warning_callback(self._on_pre_break_warning)
+        self._timer_manager.set_breathing_callback(self._on_breathing_break)
+        self._timer_manager.set_eye_rest_callback(self._on_eye_rest)
 
         # Register Gio actions for notification snooze buttons
         self._register_actions()
@@ -153,12 +160,37 @@ class SpineGuardApp(Gtk.Application):
     def _show_break_overlay(self, break_type, duration, on_complete, on_skip, on_done_early=None, context=None):
         """Create and show break overlay on all monitors."""
         self._current_break_type = break_type
+        context = context or {}
+
+        # Compute track info for walk/lie-down breaks
+        track_info = None
+        if break_type in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
+            from . import tips
+            tracks = tips.WALK_TRACKS if break_type == BreakType.WALK else tips.LIE_DOWN_TRACKS
+            pinned_key = "pinned_walk_track" if break_type == BreakType.WALK else "pinned_lie_down_track"
+            pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
+            track_id = self._routine_progress.get_today_track_id(tracks, pinned)
+            routine = self._routine_progress.get_routine(tracks, track_id)
+            if routine:
+                context["routine"] = routine
+                context["track_id"] = track_id
+                track_data = tracks[track_id]
+                track_info = {
+                    "track_name": track_data["name"],
+                    "level": self._routine_progress.get_level(track_id),
+                    "completions": self._routine_progress.get_completions(track_id),
+                    "max_level": self._routine_progress.get_max_level(tracks, track_id),
+                }
+
+        streak = self._routine_progress.get_streak() if self._routine_progress else 0
+
+        # Extract breathing exercise from context
+        breathing_exercise = context.pop("breathing_exercise", None) if context else None
 
         display = Gdk.Display.get_default()
         monitors = display.get_monitors()
         n_monitors = monitors.get_n_items()
 
-        # Primary monitor: interactive overlay
         primary_monitor = None
         if n_monitors > 0:
             primary_monitor = monitors.get_item(0)
@@ -172,6 +204,9 @@ class SpineGuardApp(Gtk.Application):
             context=context,
             on_done_early=on_done_early,
             monitor=primary_monitor if n_monitors > 1 else None,
+            track_info=track_info,
+            streak=streak,
+            breathing_exercise=breathing_exercise,
         )
         self._current_overlay.present()
 
@@ -183,7 +218,6 @@ class SpineGuardApp(Gtk.Application):
             blocker.present()
             self._blocking_overlays.append(blocker)
 
-        # Handle monitor hotplug during break
         if n_monitors > 0:
             monitors.connect("items-changed", self._on_monitors_changed)
 
@@ -234,6 +268,15 @@ class SpineGuardApp(Gtk.Application):
         self._current_break_type = None
         if bt:
             self._stats_manager.log_break_completed(bt)
+        if bt in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
+            from . import tips
+            tracks = tips.WALK_TRACKS if bt == BreakType.WALK else tips.LIE_DOWN_TRACKS
+            pinned_key = "pinned_walk_track" if bt == BreakType.WALK else "pinned_lie_down_track"
+            pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
+            track_id = self._routine_progress.get_today_track_id(tracks, pinned)
+            self._routine_progress.record_completion(track_id, tracks)
+        if self._routine_progress:
+            self._routine_progress.record_day_completion()
         self._timer_manager.break_completed()
 
     def _on_break_done_early(self):
@@ -244,6 +287,15 @@ class SpineGuardApp(Gtk.Application):
         self._current_break_type = None
         if bt:
             self._stats_manager.log_break_done_early(bt)
+        if bt in (BreakType.WALK, BreakType.LIE_DOWN) and self._routine_progress:
+            from . import tips
+            tracks = tips.WALK_TRACKS if bt == BreakType.WALK else tips.LIE_DOWN_TRACKS
+            pinned_key = "pinned_walk_track" if bt == BreakType.WALK else "pinned_lie_down_track"
+            pinned = self._config.get(pinned_key) if self._config.get("routine_mode") == "manual" else None
+            track_id = self._routine_progress.get_today_track_id(tracks, pinned)
+            self._routine_progress.record_completion(track_id, tracks)
+        if self._routine_progress:
+            self._routine_progress.record_day_completion()
         self._timer_manager.break_completed()
 
     def _on_break_skipped(self):
@@ -254,6 +306,8 @@ class SpineGuardApp(Gtk.Application):
         self._current_break_type = None
         if bt:
             self._stats_manager.log_break_skipped(bt)
+        if self._routine_progress:
+            self._routine_progress.record_skip()
         self._timer_manager.skip_break()
 
     # --- Position switch callbacks ---
@@ -326,6 +380,73 @@ class SpineGuardApp(Gtk.Application):
         if bt:
             self._stats_manager.log_break_skipped(bt)
 
+    # --- Breathing break callbacks ---
+
+    def _on_breathing_break(self):
+        """Called when a breathing break should trigger."""
+        if self._current_overlay:
+            return
+
+        from . import tips
+        exercise = tips.get_breathing_exercise()
+
+        self._sound_player.play_break_start()
+
+        self._show_break_overlay(
+            break_type=BreakType.BREATHING,
+            duration=2,
+            on_complete=self._on_breathing_complete,
+            on_skip=self._on_breathing_skipped,
+            on_done_early=self._on_breathing_done_early,
+            context={"breathing_exercise": exercise},
+        )
+
+    def _on_breathing_complete(self):
+        """Called when breathing break timer runs to zero."""
+        bt = self._current_break_type
+        self._close_blocking_overlays()
+        self._current_overlay = None
+        self._current_break_type = None
+        if bt:
+            self._stats_manager.log_break_completed(bt)
+
+    def _on_breathing_done_early(self):
+        """Called when user clicks Done Early on breathing break."""
+        bt = self._current_break_type
+        self._close_blocking_overlays()
+        self._current_overlay = None
+        self._current_break_type = None
+        if bt:
+            self._stats_manager.log_break_done_early(bt)
+
+    def _on_breathing_skipped(self):
+        """Called when breathing break is skipped."""
+        bt = self._current_break_type
+        self._close_blocking_overlays()
+        self._current_overlay = None
+        self._current_break_type = None
+        if bt:
+            self._stats_manager.log_break_skipped(bt)
+
+    # --- Eye rest callbacks ---
+
+    def _on_eye_rest(self):
+        """Called when eye rest micro-break triggers."""
+        if self._current_overlay or self._current_micro_overlay:
+            return
+
+        self._current_micro_overlay = MicroBreakOverlay(
+            message="Look at something 20 feet away",
+            duration_seconds=20,
+            on_complete=self._on_eye_rest_complete,
+        )
+        self._current_micro_overlay.present()
+
+    def _on_eye_rest_complete(self):
+        """Called when eye rest micro-break auto-completes."""
+        self._current_micro_overlay = None
+        self._stats_manager.log_break_completed(BreakType.EYE_REST)
+
     # --- Notification callbacks ---
 
     def _on_water_reminder(self):
@@ -394,7 +515,7 @@ class SpineGuardApp(Gtk.Application):
         if self._settings_window:
             self._settings_window.present()
             return
-        self._settings_window = SettingsDialog(self._config, application=self)
+        self._settings_window = SettingsDialog(self._config, application=self, routine_progress=self._routine_progress)
         self._settings_window.connect("close-request", self._on_settings_closed)
         self._settings_window.present()
 

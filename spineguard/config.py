@@ -31,6 +31,13 @@ DEFAULTS = {
     "physio_enabled": True,
     "physio_hour": 14,
     "physio_minute": 0,
+    "breathing_enabled": True,
+    "breathing_frequency": 3,
+    "eye_rest_enabled": True,
+    "eye_rest_interval_minutes": 20,
+    "routine_mode": "auto",
+    "pinned_walk_track": None,
+    "pinned_lie_down_track": None,
 }
 
 
